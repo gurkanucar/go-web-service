@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    container_name: ${PROJECT_NAME}-api
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    env_file:
+      - .env
+    environment:
+      - SERVER_HOST=0.0.0.0
+    labels:
+      - "logging=true" # This is used to filter logs in promtail-config.yaml
+    restart: unless-stopped
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: promtail-agent
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/promtail-remote.yaml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    restart: unless-stopped
+
+volumes:

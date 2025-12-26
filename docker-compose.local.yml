@@ -1,0 +1,91 @@
+version: "3.8"
+
+services:
+  app:
+    build: .
+    container_name: ${PROJECT_NAME}-api
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    env_file:
+      - .env
+    environment:
+      - SERVER_HOST=0.0.0.0
+    labels:
+      - "logging=true" # This is used to filter logs in promtail-config.yaml
+    restart: unless-stopped
+    networks:
+      - logging_net
+  loki:
+    image: grafana/loki:latest
+    container_name: ${PROJECT_NAME}-loki
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./config/loki.yaml:/etc/loki/local-config.yaml
+      - loki_data:/loki
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    networks:
+      - logging_net
+
+  loki-gateway:
+    image: nginx:alpine
+    container_name: ${PROJECT_NAME}-gateway
+    environment:
+      - LOKI_USER=${LOKI_USER}
+      - LOKI_PASSWORD=${LOKI_PASSWORD}
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+    entrypoint: >
+      /bin/sh -c "
+        apk add --no-cache apache2-utils;
+        htpasswd -c -b -B /etc/nginx/.htpasswd $${LOKI_USER} $${LOKI_PASSWORD};
+        nginx -g 'daemon off;'
+      "
+    depends_on:
+      - loki
+    ports:
+      - "3101:80"
+    networks:
+      - logging_net
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    container_name: ${PROJECT_NAME}-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - loki
+    ports:
+      - "3000:3000"
+    networks:
+      - logging_net
+
+  promtail:
+    image: grafana/promtail:2.9.2
+    container_name: ${PROJECT_NAME}-promtail
+    environment:
+      - LOKI_USER=${LOKI_USER}
+      - LOKI_PASSWORD=${LOKI_PASSWORD}
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./config/promtail-local.yaml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml -config.expand-env=true
+    restart: unless-stopped
+    networks:
+      - logging_net
+
+volumes:
+  grafana_data:
+  loki_data:
+
+
+networks:
+  logging_net:
+    driver: bridge

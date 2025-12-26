@@ -1,0 +1,391 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "An example API service",
+        "title": "Project API",
+        "contact": {},
+        "version": "1.0"
+    },
+    "paths": {
+        "/api/todos": {
+            "get": {
+                "description": "Get a list of all todos with pagination, filtering, and sorting",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Get all todos",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search query (title)",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "boolean",
+                        "description": "Filter by completed status",
+                        "name": "completed",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Page size",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort by field (allowed: id, title, created_at)",
+                        "name": "sort_by",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "default": "desc",
+                        "description": "Sort direction (asc, desc)",
+                        "name": "order",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/definitions/response.PageData"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "content": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "$ref": "#/definitions/todo.Todo"
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Validation error or invalid query params",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Create a new todo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Create a todo",
+                "parameters": [
+                    {
+                        "description": "Todo to create",
+                        "name": "todo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo.CreateTodoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo.Todo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/todos/{id}": {
+            "get": {
+                "description": "Get a todo by ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Get a todo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Todo ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo.Todo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandler.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "Update an existing todo",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "todos"
+                ],
+                "summary": "Update a todo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Todo ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Todo update data",
+                        "name": "todo",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/todo.UpdateTodoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/todo.Todo"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/errorhandler.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "errorhandler.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "businessErrorCode": {
+                    "type": "integer"
+                },
+                "error": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "traceId": {
+                    "type": "string"
+                },
+                "validationErrors": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "response.BaseResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "error": {
+                    "type": "boolean"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "traceId": {
+                    "type": "string"
+                }
+            }
+        },
+        "response.PageData": {
+            "type": "object",
+            "properties": {
+                "content": {},
+                "pageable": {
+                    "$ref": "#/definitions/response.Pageable"
+                }
+            }
+        },
+        "response.Pageable": {
+            "type": "object",
+            "properties": {
+                "empty": {
+                    "type": "boolean"
+                },
+                "first": {
+                    "type": "boolean"
+                },
+                "last": {
+                    "type": "boolean"
+                },
+                "numberOfElements": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "totalElements": {
+                    "type": "integer"
+                },
+                "totalPages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "todo.CreateTodoRequest": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "title": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                }
+            }
+        },
+        "todo.Todo": {
+            "type": "object",
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "todo.UpdateTodoRequest": {
+            "type": "object",
+            "required": [
+                "title"
+            ],
+            "properties": {
+                "completed": {
+                    "type": "boolean"
+                },
+                "title": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Enter \"Bearer\" followed by a space and your JWT token. Example: Bearer eyJhbGc...",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

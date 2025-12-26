@@ -1,0 +1,246 @@
+definitions:
+  errorhandler.ErrorResponse:
+    properties:
+      businessErrorCode:
+        type: integer
+      error:
+        type: boolean
+      message:
+        type: string
+      traceId:
+        type: string
+      validationErrors:
+        additionalProperties:
+          type: string
+        type: object
+    type: object
+  response.BaseResponse:
+    properties:
+      data: {}
+      error:
+        type: boolean
+      message:
+        type: string
+      traceId:
+        type: string
+    type: object
+  response.PageData:
+    properties:
+      content: {}
+      pageable:
+        $ref: '#/definitions/response.Pageable'
+    type: object
+  response.Pageable:
+    properties:
+      empty:
+        type: boolean
+      first:
+        type: boolean
+      last:
+        type: boolean
+      numberOfElements:
+        type: integer
+      size:
+        type: integer
+      totalElements:
+        type: integer
+      totalPages:
+        type: integer
+    type: object
+  todo.CreateTodoRequest:
+    properties:
+      title:
+        maxLength: 100
+        minLength: 3
+        type: string
+    required:
+    - title
+    type: object
+  todo.Todo:
+    properties:
+      completed:
+        type: boolean
+      id:
+        type: integer
+      title:
+        type: string
+    type: object
+  todo.UpdateTodoRequest:
+    properties:
+      completed:
+        type: boolean
+      title:
+        maxLength: 100
+        minLength: 3
+        type: string
+    required:
+    - title
+    type: object
+info:
+  contact: {}
+  description: An example API service
+  title: Project API
+  version: "1.0"
+paths:
+  /api/todos:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of all todos with pagination, filtering, and sorting
+      parameters:
+      - description: Search query (title)
+        in: query
+        name: q
+        type: string
+      - description: Filter by completed status
+        in: query
+        name: completed
+        type: boolean
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Page size
+        in: query
+        name: size
+        type: integer
+      - description: 'Sort by field (allowed: id, title, created_at)'
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Sort direction (asc, desc)
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  allOf:
+                  - $ref: '#/definitions/response.PageData'
+                  - properties:
+                      content:
+                        items:
+                          $ref: '#/definitions/todo.Todo'
+                        type: array
+                    type: object
+              type: object
+        "400":
+          description: Validation error or invalid query params
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Get all todos
+      tags:
+      - todos
+    post:
+      consumes:
+      - application/json
+      description: Create a new todo
+      parameters:
+      - description: Todo to create
+        in: body
+        name: todo
+        required: true
+        schema:
+          $ref: '#/definitions/todo.CreateTodoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo.Todo'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errorhandler.ErrorResponse'
+      summary: Create a todo
+      tags:
+      - todos
+  /api/todos/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Get a todo by ID
+      parameters:
+      - description: Todo ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo.Todo'
+              type: object
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/errorhandler.ErrorResponse'
+      summary: Get a todo
+      tags:
+      - todos
+    put:
+      consumes:
+      - application/json
+      description: Update an existing todo
+      parameters:
+      - description: Todo ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Todo update data
+        in: body
+        name: todo
+        required: true
+        schema:
+          $ref: '#/definitions/todo.UpdateTodoRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/todo.Todo'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/errorhandler.ErrorResponse'
+      summary: Update a todo
+      tags:
+      - todos
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter "Bearer" followed by a space and your JWT token. Example:
+      Bearer eyJhbGc...'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
